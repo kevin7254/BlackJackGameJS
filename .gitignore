@@ -593,6 +593,9 @@ node_modules/
 # Visual Studio 6 build log
 *.plg
 
+# Only for todos
+TODO.txt
+
 # Visual Studio 6 workspace options file
 *.opt
 
