@@ -1,5 +1,8 @@
 import 'phaser';
 import {config} from "./config.js";
+import Button from "./button.js";
+import {log} from "debug";
+import ChipsContainer from "./chipsContainer.js";
 
 class Example extends Phaser.Scene {
     constructor() {
@@ -14,7 +17,9 @@ class Example extends Phaser.Scene {
 
         this.load.image('board', 'board.png');
         this.load.spritesheet('cards', 'cards.png', {frameWidth: 100, frameHeight: 144});
+        this.load.spritesheet('chips', 'pokerchips.png', {frameWidth: 76, frameHeight: 76});
         this.cardAtlas = this.createCards();
+        this.pokerChips = this.createChips();
 
         this.dealer = {
             showDealerCards: {
@@ -24,7 +29,8 @@ class Example extends Phaser.Scene {
             cardStash: {},
         };
         for (let i = 0; i < 3; i++) {
-            const cardStashCard = this.add.sprite(1500 - (i * 10), 100 + (i * 10), 'cards', this.cardAtlas['hearts-blank']);
+            const cardStashCard = this.add.sprite(1500 - (i * 10), 100 + (i * 10),
+                'cards', this.cardAtlas['hearts-blank']);
             cardStashCard.setRotation(-0.85);
             this.dealer.cardStash[i] = cardStashCard;
         }
@@ -80,6 +86,8 @@ class Example extends Phaser.Scene {
         const x2 = this.coordinatesForPlayerCards[5].two.x;
         const y2 = this.coordinatesForPlayerCards[5].two.y;
 
+        const button = new Button(this, 200, 200, 'Start', () => console.log('start'))
+
         const kingOfHearts = this.add.sprite(x1, y1, 'cards', this.cardAtlas[this.getRandomCard()]);
         kingOfHearts.setScale(0.9);
         const queenOfHearts = this.add.sprite(x2, y2, 'cards', this.cardAtlas[this.getRandomCard()]);
@@ -91,50 +99,42 @@ class Example extends Phaser.Scene {
         }
         console.log(Object.keys(this.cardAtlas));
         console.log(this.getRandomCard());
-        const dealerDownCard = this.add.sprite(860, 150, 'cards', this.cardAtlas[this.getRandomCard()]);
-        const dealerDownCard2 = this.add.sprite(920, 150, 'cards', this.cardAtlas['hearts-blank']);
+        this.addCardEventListener();
 
-        //Add a button to deal cards
-        const dealButton = this.add.text(100, 200, 'Deal', {fill: '#FFFFFF'})
-            .setInteractive()
-            .on('pointerdown', () => this.dealCards());
+        const dealButton = new Button(this, 100, 200, 'Deal', this.dealCards);
+        const resetButton = new Button(this, 100, 250, 'Reset', this.resetGame);
+        const shuffleButton = new Button(this, 100, 300, 'Shuffle', this.shuffleDeck);
+        const showDealerCardsButton = new Button(this, 100, 350, 'Show Dealer', this.showDealerCards);
+        const hideDealerCardsButton = new Button(this, 100, 400, 'Hide Dealer', this.hideDealerCards);
+        const showPlayerCardsButton = new Button(this, 100, 450, 'show Player', this.showPlayerCards);
 
-        //Add a button to reset the game
-        const resetButton = this.add.text(100, 250, 'Reset', {fill: '#FFFFFF'})
-            .setInteractive()
-            .on('pointerdown', () => this.resetGame());
-
-        //Add a button to shuffle the deck
-        const shuffleButton = this.add.text(100, 300, 'Shuffle', {fill: '#FFFFFF'})
-            .setInteractive()
-            .on('pointerdown', () => this.shuffleDeck());
-
-        //Add a button to show the dealer's cards
-        const showDealerCardsButton = this.add.text(100, 350, 'Show Dealer Cards', {fill: '#FFFFFF'})
-            .setInteractive()
-            .on('pointerdown', () => this.showDealerCards());
-
-        //Add a button to hide the dealer's cards
-        const hideDealerCardsButton = this.add.text(100, 400, 'Hide Dealer Cards', {fill: '#FFFFFF'})
-            .setInteractive()
-            .on('pointerdown', () => this.hideDealerCards());
-
-        //Add a button to show the player's cards
-        const showPlayerCardsButton = this.add.text(100, 450, 'Show Player Cards', {fill: '#FFFFFF'})
-            .setInteractive()
-            .on('pointerdown', () => this.showPlayerCards());
-
+        new ChipsContainer(this);
     };
 
-    dealCards() {
-        const x1 = this.coordinatesForPlayerCards[3].one.x;
-        const y1 = this.coordinatesForPlayerCards[3].one.y;
-        const x2 = this.coordinatesForPlayerCards[3].two.x;
-        const y2 = this.coordinatesForPlayerCards[3].two.y;
+    dealCards(i = 0) {
+        const x1 = this.coordinatesForPlayerCards[i].one.x;
+        const y1 = this.coordinatesForPlayerCards[i].one.y;
+        const x2 = this.coordinatesForPlayerCards[i].two.x;
+        const y2 = this.coordinatesForPlayerCards[i].two.y;
 
         const kingOfHearts = this.add.sprite(x1, y1, 'cards', this.cardAtlas[this.getRandomCard()]);
         kingOfHearts.setScale(0.9);
         const queenOfHearts = this.add.sprite(x2, y2, 'cards', this.cardAtlas[this.getRandomCard()]);
+        queenOfHearts.setScale(0.9);
+    }
+
+    dealChips(i = 0) {
+        const x1 = this.coordinatesForPlayerCards[i].one.x;
+        const y1 = this.coordinatesForPlayerCards[i].one.y;
+        const x2 = this.coordinatesForPlayerCards[i].two.x;
+        const y2 = this.coordinatesForPlayerCards[i].two.y;
+
+        const array = Object.keys(this.pokerChips);
+        //return array[Math.floor(Math.random() * 60)];
+
+        const kingOfHearts = this.add.sprite(x1, y1, 'chips', this.pokerChips[array[5]]);
+        kingOfHearts.setScale(0.9);
+        const queenOfHearts = this.add.sprite(x2, y2, 'chips', this.pokerChips[array[8]]);
         queenOfHearts.setScale(0.9);
     }
 
@@ -147,27 +147,13 @@ class Example extends Phaser.Scene {
     }
 
     showDealerCards() {
-        const x1 = this.coordinatesForPlayerCards[0].one.x;
-        const y1 = this.coordinatesForPlayerCards[0].one.y;
-        const x2 = this.coordinatesForPlayerCards[0].two.x;
-        const y2 = this.coordinatesForPlayerCards[0].two.y;
-
-        const kingOfHearts = this.add.sprite(x1, y1, 'cards', this.cardAtlas[this.getRandomCard()]);
-        kingOfHearts.setScale(0.9);
-        const queenOfHearts = this.add.sprite(x2, y2, 'cards', this.cardAtlas[this.getRandomCard()]);
-        queenOfHearts.setScale(0.9);
+        const dealerDownCard = this.add.sprite(860, 150, 'cards', this.cardAtlas[this.getRandomCard()]);
+        const dealerDownCard2 = this.add.sprite(920, 150, 'cards', this.cardAtlas['hearts-blank']);
     }
 
     hideDealerCards() {
-        const x1 = this.coordinatesForPlayerCards[0].one.x;
-        const y1 = this.coordinatesForPlayerCards[0].one.y;
-        const x2 = this.coordinatesForPlayerCards[0].two.x;
-        const y2 = this.coordinatesForPlayerCards[0].two.y;
-
-        const kingOfHearts = this.add.sprite(x1, y1, 'cards', this.cardAtlas['hearts-blank']);
-        kingOfHearts.setScale(0.9);
-        const queenOfHearts = this.add.sprite(x2, y2, 'cards', this.cardAtlas['hearts-blank']);
-        queenOfHearts.setScale(0.9);
+        const dealerDownCard = this.add.sprite(860, 150, 'cards', this.cardAtlas['hearts-blank']);
+        const dealerDownCard2 = this.add.sprite(920, 150, 'cards', this.cardAtlas['hearts-blank']);
     }
 
     showPlayerCards() {
@@ -200,6 +186,21 @@ class Example extends Phaser.Scene {
         return cardAtlas;
     }
 
+    createChips() {
+        const color = ['pink', 'gray', 'black'];
+        const value = ['1', '5', '25', '50', '100'];
+
+        const pokerChips = {};
+
+        for (let colorIndex = 0; colorIndex < color.length; colorIndex++) {
+            for (let valueIndex = 0; valueIndex < value.length; valueIndex++) {
+                const pokerChipKey = `${color[colorIndex]}-${value[valueIndex]}`;
+                pokerChips[pokerChipKey] = colorIndex * 5 + valueIndex;
+            }
+        }
+        return pokerChips;
+    }
+
 
     update(time, delta) {
         super.update(time, delta);
@@ -226,6 +227,50 @@ class Example extends Phaser.Scene {
     getRandomCard() {
         const array = Object.keys(this.cardAtlas);
         return array[Math.floor(Math.random() * 60)];
+    }
+
+    addCardEventListener() {
+        for (let i = 0; i <= 5; i++) {
+            const baseX = 321;
+            const cardWidth = 192;
+            const cardSpacing = 34;
+            const xOffset = i * (cardWidth + cardSpacing);
+
+            const x = baseX + xOffset + i;
+
+
+
+            const rec = this.add.rectangle(x, 616, 146, 192)
+                .setInteractive()
+                .on('pointerdown', () => {
+                    this.dealChips(i);
+                })
+                .on('pointerover', () => {
+                    //Make the rec white
+                    rec.setStrokeStyle(2, 0xffffff);
+
+                    this.tweens.add({
+                        targets: rec,
+                        duration: 20,
+                        scaleX: 1.05,
+                        scaleY: 1.05,
+                        ease: 'Sine.easeInOut',
+                    });
+                })
+                .on('pointerout', () => {
+                    this.tweens.killTweensOf(rec);
+                    rec.setScale(1, 1);
+                    rec.setStrokeStyle(2, 0x000000);
+                });
+            rec.setStrokeStyle(2, 0x000000);
+            rec.setFillStyle(0x000000, 0.5);
+
+            const text = this.add.text(x - 65, 550, 'PLACE BET', {
+                fontFamily: 'Arial',
+                fontSize: 24,
+                color: '#ffffff'
+            });
+        }
     }
 }
 
